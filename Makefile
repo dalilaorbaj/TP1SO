@@ -1,7 +1,8 @@
 chompchamps:
 	cp ref/ChompChamps build/ChompChamps
 CC=gcc
-CFLAGS=-std=c11 -Wall -Wextra -O2 -pedantic
+//CFLAGS=-std=c11 -Wall -Wextra -O2 -pedantic //supuestamente el -pedantic fuerza el estandar C estricto y puede ocultar definiciones extendidas como struct sigaction
+CFLAGS=-std=c11 -Wall -Wextra -O2
 LDFLAGS=-pthread
 
 BUILD_DIR=build
