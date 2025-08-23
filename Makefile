@@ -1,28 +1,32 @@
+CC = gcc
+CFLAGS = -std=gnu99 -Wall 
+LDFLAGS = -pthread
+LDFLAGS_VIEW = -pthread -lncurses
+
+EXECUTABLES = master player view_simple
+
+SOURCES_MASTER = master.c shared_memory.c sync_utils.c
+SOURCES_PLAYER = player.c shared_memory.c sync_utils.c
+SOURCES_VIEW   = view.c shared_memory.c sync_utils.c
+SOURCES_VIEW_SIMPLE = view_simple.c shared_memory.c sync_utils.c
+
+all: $(EXECUTABLES) chompchamps
+
 chompchamps:
-	cp ref/ChompChamps build/ChompChamps
-CC=gcc
-//CFLAGS=-std=c11 -Wall -Wextra -O2 -pedantic //supuestamente el -pedantic fuerza el estandar C estricto y puede ocultar definiciones extendidas como struct sigaction
-CFLAGS=-std=c11 -Wall -Wextra -O2
-LDFLAGS=-pthread
+	cp ChompChamps .
 
-BUILD_DIR=build
-SRC_MASTER=$(wildcard src/master/*.c) $(wildcard shared/*.c)
-SRC_VIEW=$(wildcard src/view/*.c) $(wildcard shared/*.c)
-SRC_PLAYER=$(wildcard src/player/*.c) $(wildcard shared/*.c)
+master: $(SOURCES_MASTER)
+	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
 
-all: $(BUILD_DIR)/master $(BUILD_DIR)/view $(BUILD_DIR)/player
+player: $(SOURCES_PLAYER)
+	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
 
-$(BUILD_DIR):
-	mkdir -p $(BUILD_DIR)
+view: $(SOURCES_VIEW)
+	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS_VIEW)
 
-$(BUILD_DIR)/master: $(BUILD_DIR) $(SRC_MASTER)
-	$(CC) $(CFLAGS) -o $@ $(SRC_MASTER) $(LDFLAGS)
+view_simple: $(SOURCES_VIEW_SIMPLE)
+	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
 
-$(BUILD_DIR)/view: $(BUILD_DIR) $(SRC_VIEW)
-	$(CC) $(CFLAGS) -o $@ $(SRC_VIEW) $(LDFLAGS)
-
-$(BUILD_DIR)/player: $(BUILD_DIR) $(SRC_PLAYER)
-	$(CC) $(CFLAGS) -o $@ $(SRC_PLAYER) $(LDFLAGS)
-
+.PHONY: clean
 clean:
-	rm -rf $(BUILD_DIR)
+	rm -f $(EXECUTABLES)

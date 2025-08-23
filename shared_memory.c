@@ -6,7 +6,7 @@
 
 // Funciones básicas de memoria compartida
 
-int create_shared_memory(const char* name, size_t size) {
+int create_shared_memory(const char* name, size_t size) { 
     int fd = shm_open(name, O_CREAT | O_RDWR, 0666);
     if (fd == -1) {
         perror("shm_open create");
@@ -37,6 +37,16 @@ void* map_shared_memory(int fd, size_t size) {
     void* ptr = mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
     if (ptr == MAP_FAILED) {
         perror("mmap");
+        return NULL;
+    }
+    
+    return ptr;
+}
+
+void* map_shared_memory_readonly(int fd, size_t size) {
+    void* ptr = mmap(NULL, size, PROT_READ, MAP_SHARED, fd, 0);
+    if (ptr == MAP_FAILED) {
+        perror("mmap readonly");
         return NULL;
     }
     
