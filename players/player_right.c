@@ -154,7 +154,7 @@ int main(int argc, char *argv[])
         reader_enter(game_sync);
         
         // Generar un movimiento aleatorio
-        move = generate_random_direction();
+        move = 2;
 
         /* Salir como readers de game_sync? */
         reader_exit(game_sync);
