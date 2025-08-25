@@ -115,13 +115,14 @@ void allow_player_move(game_sync_t* sync, int player_id) {
     }
 }
 
-void wait_player_move(game_sync_t* sync, int player_id) {
+void wait_player_turn(game_sync_t* sync, int player_id) {
     if (player_id >= 0 && player_id < MAX_PLAYERS) {
         if (sem_wait(&sync->player_move_sem[player_id]) == -1) {
             perror("sem_wait player_move_sem");
         }
     }
 }
+
 
 // Función para limpiar semáforos
 
