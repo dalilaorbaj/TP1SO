@@ -3,6 +3,23 @@
 #include <errno.h>
 
 // Implementación del patrón lectores-escritores que evita inanición del escritor
+// (?) esta bien?
+void initialize_semaphores(game_sync_t* sync, int num_players) {
+    // Inicializar semáforos de comunicación entre master y vista
+    sem_init(&sync->update_view_sem, 1, 0);  // en lugar de sem_master_to_view
+    sem_init(&sync->view_done_sem, 1, 0);    // en lugar de sem_view_to_master
+    
+    // Inicializar semáforos para el algoritmo de lectores-escritores con prioridad a escritor
+    sem_init(&sync->master_access_mutex, 1, 1); // en lugar de sem_turnstile
+    sem_init(&sync->game_state_mutex, 1, 1);    // en lugar de sem_state_lock
+    sem_init(&sync->readers_count_mutex, 1, 1); // en lugar de sem_read_count_lock
+    sync->active_readers = 0;                   // en lugar de readers_count
+    
+    // Inicializar semáforos para controlar a los jugadores
+    for (int i = 0; i < MAX_PLAYERS; ++i) {
+        sem_init(&sync->player_move_sem[i], 1, 0); // en lugar de sem_player
+    }
+}
 
 void writer_enter(game_sync_t* sync) {
     if (sem_wait(&sync->master_access_mutex) == -1) {
