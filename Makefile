@@ -1,36 +1,63 @@
 CC = gcc
-CFLAGS = -std=gnu99 -Wall 
+CFLAGS = -std=gnu99 -Wall -I.
 LDFLAGS = -pthread
 LDFLAGS_VIEW = -pthread -lncurses
 
-EXECUTABLES = master player player_right view_simple view 
+EXECUTABLES = master player view_simple view
 
 SOURCES_MASTER = master.c shared_memory.c sync_utils.c
-SOURCES_PLAYER = ./players/player.c shared_memory.c sync_utils.c
-SOURCES_PLAYER_RIGHT = ./players/player_right.c shared_memory.c sync_utils.c
+SOURCES_PLAYER = players/player.c shared_memory.c sync_utils.c
 SOURCES_VIEW   = view.c shared_memory.c sync_utils.c
 SOURCES_VIEW_SIMPLE = view_simple.c shared_memory.c sync_utils.c
 
-all: $(EXECUTABLES) chompchamps
+# Check if ncurses is installed
+NCURSES_CHECK = $(shell pkg-config --exists ncurses 2>/dev/null && echo "yes" || echo "no")
+
+all: check-ncurses $(EXECUTABLES) chompchamps
+
+check-ncurses:
+	@echo "Checking for ncurses library..."
+	@if ! pkg-config --exists ncurses 2>/dev/null; then \
+		echo "ncurses not found. Installing..."; \
+		if command -v apt-get >/dev/null 2>&1; then \
+			apt-get update && apt-get install -y libncurses5-dev libncursesw5-dev; \
+		elif command -v brew >/dev/null 2>&1; then \
+			brew install ncurses; \
+		else \
+			echo "Error: Package manager not found. Please install ncurses manually:"; \
+			echo "  Ubuntu/Debian: apt-get install libncurses5-dev libncursesw5-dev"; \
+			echo "  macOS: brew install ncurses"; \
+			exit 1; \
+		fi; \
+	else \
+		echo "ncurses library found."; \
+	fi
+
+install-deps: check-ncurses
 
 chompchamps:
-	cp ChompChamps .
+	@if [ ! -f ./ChompChamps ]; then cp ChompChamps .; fi
 
 master: $(SOURCES_MASTER)
-	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
+	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS) -lm
 
 player: $(SOURCES_PLAYER)
 	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
 
-player_right: $(SOURCES_PLAYER_RIGHT)
-	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
-
-view: $(SOURCES_VIEW)
-	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS_VIEW)
+view: check-ncurses $(SOURCES_VIEW)
+	$(CC) $(CFLAGS) -o $@ $(SOURCES_VIEW) $(LDFLAGS_VIEW)
 
 view_simple: $(SOURCES_VIEW_SIMPLE)
 	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
 
-.PHONY: clean
+# Alternative target that forces dependency installation
+setup: install-deps
+	@echo "Dependencies installed successfully."
+
+# Clean and rebuild everything
+rebuild: clean all
+
+.PHONY: clean check-ncurses install-deps setup rebuild
 clean:
 	rm -f $(EXECUTABLES)
+	@echo "Cleaned executables."

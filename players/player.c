@@ -6,6 +6,8 @@
 #include <string.h>
 #include <signal.h>
 #include <time.h>
+#include <stdbool.h>  
+#include <sys/stat.h> 
 
 // Variables globales
 game_state_t *game_state = NULL;
