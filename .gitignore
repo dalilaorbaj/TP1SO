@@ -9,3 +9,5 @@ master
 player
 view
 view_simple
+report.tasks
+*.log
