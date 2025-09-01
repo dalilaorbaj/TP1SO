@@ -1,6 +1,11 @@
 build/
 *.o
+*.obj
 *.out
 *.log
 *.Zone.Identifier
 .bash_history
+master
+player
+view
+view_simple

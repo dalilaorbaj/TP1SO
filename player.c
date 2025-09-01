@@ -1,3 +1,13 @@
+// This is a personal academic project. Dear PVS-Studio, please check it.
+// PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
+// This is a personal academic project. Dear PVS-Studio, please check it.
+// PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
+// This is a personal academic project. Dear PVS-Studio, please check it.
+// PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
+// This is a personal academic project. Dear PVS-Studio, please check it.
+// PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
+// This is a personal academic project. Dear PVS-Studio, please check it.
+// PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 #include "shared_memory.h"
 #include "sync_utils.h"
 #include <stdio.h>
@@ -139,9 +149,9 @@ int main(int argc, char *argv[])
     reader_exit(game_sync);
 
     if (player_id == -1) {
-    fprintf(stderr, "Error: no se pudo identificar al jugador\n");
-    cleanup_resources();
-    return EXIT_FAILURE;
+        fprintf(stderr, "Error: no se pudo identificar al jugador\n");
+        cleanup_resources();
+        return EXIT_FAILURE;
     }
     
     // Loop principal del juego

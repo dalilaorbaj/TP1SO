@@ -1,3 +1,13 @@
+// This is a personal academic project. Dear PVS-Studio, please check it.
+// PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
+// This is a personal academic project. Dear PVS-Studio, please check it.
+// PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
+// This is a personal academic project. Dear PVS-Studio, please check it.
+// PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
+// This is a personal academic project. Dear PVS-Studio, please check it.
+// PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
+// This is a personal academic project. Dear PVS-Studio, please check it.
+// PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 #include "shared_memory.h"
 #include "sync_utils.h"
 #include <stdio.h>
@@ -106,13 +116,13 @@ void draw_scoreboard_simple(game_state_t *state)
 
     for (unsigned int i = 0; i < state->player_count; i++)
     {
-        printf("Player %d (%s): Score %u, Moves: %u valid / %u invalid %s\n",
-               i + 1,
-               state->players[i].player_name,
-               state->players[i].score,
-               state->players[i].valid_moves,
-               state->players[i].invalid_moves,
-               state->players[i].is_blocked ? "[BLOCKED]" : "");
+        printf("Player %u (%s): Score %u, Moves: %u valid / %u invalid %s\n",
+            i + 1,
+            state->players[i].player_name,
+            state->players[i].score,
+            state->players[i].valid_moves,
+            state->players[i].invalid_moves,
+            state->players[i].is_blocked ? "[BLOCKED]" : "");
     }
 
     printf("\n");
@@ -176,8 +186,7 @@ int main(int argc, char *argv[])
     width = game_state->board_width;
     height = game_state->board_height;
 
-    printf("Board size: %dx%d, Player count: %u\n",
-           width, height, game_state->player_count);
+    printf("Board size: %hux%hu, Player count: %u\n", width, height, game_state->player_count);
 
     printf("Waiting for game updates...\n\n");
 

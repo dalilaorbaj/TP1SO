@@ -2,6 +2,8 @@
 // PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 // This is a personal academic project. Dear PVS-Studio, please check it.
 // PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
+// This is a personal academic project. Dear PVS-Studio, please check it.
+// PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 #include "shared_memory.h"
 #include "sync_utils.h"
 #include <stdio.h>
@@ -36,8 +38,7 @@ void print_colored_text(WINDOW *win, int y, int x, int color_pair, const char *f
     va_start(args, format);
     
     wattron(win, COLOR_PAIR(color_pair));
-    wmove(win, y, x);
-    vw_printw(win, format, args);
+    mvwprintw(win, y, x, format, args);
     wattroff(win, COLOR_PAIR(color_pair));
     
     va_end(args);
@@ -90,28 +91,13 @@ void signal_handler(int sig)
 void init_colors(void)
 {
     start_color();
-    /*init_pair(COLOR_BOARD_BG, COLOR_BLACK, COLOR_GREEN);
+    init_pair(COLOR_BOARD_BG, COLOR_BLACK, COLOR_GREEN);
     init_pair(COLOR_PLAYER1, COLOR_BLACK, COLOR_RED);
     init_pair(COLOR_PLAYER2, COLOR_BLACK, COLOR_BLUE);
     init_pair(COLOR_PLAYER3, COLOR_BLACK, COLOR_YELLOW);
     init_pair(COLOR_PLAYER4, COLOR_BLACK, COLOR_MAGENTA);
     init_pair(COLOR_SCORE, COLOR_WHITE, COLOR_BLACK);
     init_pair(COLOR_CAPTURED, COLOR_BLACK, COLOR_WHITE);
-    */
-    
-    const int color_defs[][3] = {
-        {COLOR_BOARD_BG, COLOR_BLACK, COLOR_GREEN},
-        {COLOR_PLAYER1, COLOR_BLACK, COLOR_RED},
-        {COLOR_PLAYER2, COLOR_BLACK, COLOR_BLUE},
-        {COLOR_PLAYER3, COLOR_BLACK, COLOR_YELLOW},
-        {COLOR_PLAYER4, COLOR_BLACK, COLOR_MAGENTA},
-        {COLOR_SCORE, COLOR_WHITE, COLOR_BLACK},
-        {COLOR_CAPTURED, COLOR_BLACK, COLOR_WHITE}
-    };
-    
-    for (size_t i = 0; i < sizeof(color_defs) / sizeof(color_defs[0]); i++) {
-        init_pair(color_defs[i][0], color_defs[i][1], color_defs[i][2]);
-    }
 }
 
 void draw_board(WINDOW *win, game_state_t *state)
@@ -157,11 +143,11 @@ void draw_board(WINDOW *win, game_state_t *state)
                 print_colored_text(win, pos_y, pos_x, COLOR_BOARD_BG, "%2d", cell_value);
             }
 
-            else // cel_vallue <= 0
+            else
             {
                 // Mostrar celda capturada con el color del jugador que la capturó
                 int player_idx = -cell_value; // Convertimos el valor negativo al índice del jugador
-                if (player_idx < state->player_count) {
+                if (player_idx >= 0 && player_idx < state->player_count) {
                     // Color del jugador que capturó la celda
                     int color_pair = COLOR_PLAYER1 + (player_idx % 4);
                     print_colored_text(win, pos_y, pos_x, color_pair, "##");

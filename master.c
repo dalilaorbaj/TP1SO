@@ -1,3 +1,13 @@
+// This is a personal academic project. Dear PVS-Studio, please check it.
+// PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
+// This is a personal academic project. Dear PVS-Studio, please check it.
+// PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
+// This is a personal academic project. Dear PVS-Studio, please check it.
+// PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
+// This is a personal academic project. Dear PVS-Studio, please check it.
+// PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
+// This is a personal academic project. Dear PVS-Studio, please check it.
+// PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
@@ -112,22 +122,22 @@ int main(int argc, char *argv[]) {
     }
 
     // Crear memoria compartida para el estado del juego y sincronización
-    game_state_t *state = create_game_state(width, height);
+    game_state_t *state = create_game_state(width, height); //(!) chequear que create_game_state maneje el caso MAP_FAILED internamente y devuelva NULL en ese caso
     if (state == NULL) {
         fprintf(stderr, "Error creating game state\n");
         return EXIT_FAILURE;
-    }
-
-    game_sync_t * game_sync = create_game_sync(num_players);
-    if (game_sync == NULL) {
-        fprintf(stderr, "Error creating game sync\n");
-        close_game_state(state, width, height);
-        return EXIT_FAILURE;
-    }
+    }    
     if (state == MAP_FAILED) {
         perror("mmap(/game_state)");
         shm_unlink("/game_state");
         shm_unlink("/game_sync");
+        return EXIT_FAILURE;
+    }
+
+    game_sync_t * game_sync = create_game_sync(num_players); //(!) chequear que create_game_state maneje el caso MAP_FAILED internamente y devuelva NULL en ese caso
+    if (game_sync == NULL) {
+        fprintf(stderr, "Error creating game sync\n");
+        close_game_state(state, width, height);
         return EXIT_FAILURE;
     }
     if (game_sync == MAP_FAILED) {
@@ -264,13 +274,10 @@ int main(int argc, char *argv[]) {
             _exit(127);
         }
         view_pid = vpid;
-    }
-
-    // Imprimir estado inicial (si hay vista conectada)
-    if (has_view) {
         notify_view(game_sync);
         wait_view_done(game_sync);
     }
+
     // Permitir que los jugadores comiencen a enviar movimientos (inicializar semáforos de jugadores)
     for (int i = 0; i < num_players; ++i) {
         allow_player_move(game_sync, i);
@@ -421,15 +428,7 @@ int main(int argc, char *argv[]) {
         }
     }
 
-        // Verificar si todos están bloqueados (función separada)
         bool all_blocked_now = true;
-        for (int k = 0; k < state->player_count; ++k) {
-            if (!state->players[k].is_blocked) {
-                all_blocked_now = false;
-                break;
-            }
-        }
-        // Revisar condición de fin de juego (todos bloqueados)
         for (int k = 0; k < state->player_count; ++k) {
             if (!state->players[k].is_blocked) {
                 all_blocked_now = false;
