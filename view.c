@@ -19,7 +19,7 @@ game_sync_t *game_sync = NULL;
 int shm_state_fd = -1;
 int shm_sync_fd = -1;
 bool cleanup_done = false;
-unsigned short width, height;
+unsigned short width, height, player_count;
 
 // Colores para ncurses
 #define COLOR_BOARD_BG 1
@@ -29,19 +29,6 @@ unsigned short width, height;
 #define COLOR_PLAYER4 5
 #define COLOR_SCORE 6
 #define COLOR_CAPTURED 7
-
-void print_colored_text(WINDOW *win, int y, int x, int color_pair, const char *format, ...)
-{
-    va_list args;
-    va_start(args, format);
-    
-    wattron(win, COLOR_PAIR(color_pair));
-    wmove(win, y, x);
-    vw_printw(win, format, args);
-    wattroff(win, COLOR_PAIR(color_pair));
-    
-    va_end(args);
-}
 
 void cleanup_resources(void)
 {
@@ -87,17 +74,22 @@ void signal_handler(int sig)
     exit(EXIT_SUCCESS);
 }
 
+void print_colored_text(WINDOW *win, int y, int x, int color_pair, const char *format, ...)
+{
+    va_list args;
+    va_start(args, format);
+    
+    wattron(win, COLOR_PAIR(color_pair));
+    wmove(win, y, x);
+    vw_printw(win, format, args);
+    wattroff(win, COLOR_PAIR(color_pair));
+    
+    va_end(args);
+}
+
 void init_colors(void)
 {
     start_color();
-    /*init_pair(COLOR_BOARD_BG, COLOR_BLACK, COLOR_GREEN);
-    init_pair(COLOR_PLAYER1, COLOR_BLACK, COLOR_RED);
-    init_pair(COLOR_PLAYER2, COLOR_BLACK, COLOR_BLUE);
-    init_pair(COLOR_PLAYER3, COLOR_BLACK, COLOR_YELLOW);
-    init_pair(COLOR_PLAYER4, COLOR_BLACK, COLOR_MAGENTA);
-    init_pair(COLOR_SCORE, COLOR_WHITE, COLOR_BLACK);
-    init_pair(COLOR_CAPTURED, COLOR_BLACK, COLOR_WHITE);
-    */
     
     const int color_defs[][3] = {
         {COLOR_BOARD_BG, COLOR_BLACK, COLOR_GREEN},
@@ -202,7 +194,7 @@ void draw_scoreboard(WINDOW *win, game_state_t *state)
     wrefresh(win);
 }
 
-void draw_legend(WINDOW *win)
+void draw_legend(WINDOW *win, unsigned short player_count, player_t players[])
 {
     wclear(win);
     box(win, 0, 0);
@@ -214,13 +206,16 @@ void draw_legend(WINDOW *win)
     print_colored_text(win, 2, 2, COLOR_CAPTURED, "##");
     wprintw(win, " - Captured cell");
     
-    print_colored_text(win, 3, 2, COLOR_PLAYER1, "P1");
-    wprintw(win, " - Player 1");
-    
-    if (game_state && game_state->player_count > 1) {
-        print_colored_text(win, 4, 2, COLOR_PLAYER2, "P2");
-        wprintw(win, " - Player 2");
+    for (unsigned int i = 0; i < player_count; i++) {
+        // Calculate color for player (cycling through available colors)
+        int color_pair = COLOR_PLAYER1 + (i % 4);
+        
+        // Display player identifier on its own line
+        int row = 3 + i;  // Start player entries from row 3
+        print_colored_text(win, row, 2, color_pair, "P%u", i+1);
+        wprintw(win, " - %s", players[i].player_name);
     }
+    
     
     wrefresh(win);
 }
@@ -241,7 +236,7 @@ int main(int argc, char *argv[])
         return EXIT_FAILURE;
     }
 
-    game_sync = map_shared_memory(shm_sync_fd, sizeof(game_sync_t));
+    game_sync = map_shared_memory(shm_sync_fd, sizeof(game_sync_t), false);
     if (game_sync == MAP_FAILED)
     {
         perror("map_shared_memory game_sync");
@@ -269,7 +264,7 @@ int main(int argc, char *argv[])
     }
 
     // Mapear la memoria compartida
-    game_state = map_shared_memory_readonly(shm_state_fd, shm_stat.st_size);
+    game_state = map_shared_memory(shm_state_fd, shm_stat.st_size, true);
     if (game_state == NULL)
     {
         perror("map_shared_memory_readonly game_state");
@@ -277,7 +272,8 @@ int main(int argc, char *argv[])
         return EXIT_FAILURE;
     }
 
-    // Actualizar las variables globales width y height
+    // Actualizar las variables globales width, height y player_count
+    player_count = game_state->player_count;
     width = game_state->board_width;
     height = game_state->board_height;
 
@@ -306,12 +302,14 @@ int main(int argc, char *argv[])
     
     int board_height = height + 2;  // +2 para los bordes
     int board_width = width * 3 + 4;  // 3 caracteres por celda + bordes
+
     
-    int scoreboard_height = game_state->player_count + 2;  // +2 para los bordes
+    
+    int scoreboard_height = player_count + 2;  // +2 para los bordes
     int scoreboard_width = max_x - 2;  // Ancho casi completo
     
-    int legend_height = 6;  // Alto fijo para la leyenda
-    int legend_width = 25;  // Ancho fijo para la leyenda
+    int legend_height = player_count + 4;  // Alto fijo para la leyenda
+    int legend_width = 30;  // Ancho fijo para la leyenda
     
     WINDOW *board_win = newwin(board_height, board_width, 1, (max_x - board_width) / 2);
     WINDOW *scoreboard_win = newwin(scoreboard_height, scoreboard_width, board_height + 1, 1);
@@ -328,18 +326,24 @@ int main(int argc, char *argv[])
     notify_view_done(game_sync);
     
     // Loop principal
-    while (!game_state->game_over)
-    {
+    bool gameOver = false;
+    do {
         // Esperar notificación del master
         wait_view_notification(game_sync);
         
         // Lectura segura del estado del juego
         reader_enter(game_sync);
+
+        gameOver = game_state->game_over;
+        if(gameOver) {
+            reader_exit(game_sync);
+            break;
+        }
         
         // Actualizar la interfaz
         draw_board(board_win, game_state);
         draw_scoreboard(scoreboard_win, game_state);
-        draw_legend(legend_win);
+        draw_legend(legend_win, player_count, game_state->players);
         
         doupdate();  // Actualizar todas las ventanas
         
@@ -350,7 +354,7 @@ int main(int argc, char *argv[])
         
         // Pequeña pausa para no consumir CPU
         napms(50);
-    }
+    }while(!gameOver);
 
     napms(2000);
 

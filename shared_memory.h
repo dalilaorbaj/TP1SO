@@ -56,8 +56,7 @@ typedef struct
 // Funciones para crear y abrir memoria compartida
 int create_shared_memory(const char *name, size_t size);
 int open_shared_memory(const char *name, size_t size, int flags);
-void *map_shared_memory(int fd, size_t size);
-void* map_shared_memory_readonly(int fd, size_t size);
+void *map_shared_memory(int fd, size_t size, bool readonly);
 void unmap_shared_memory(void *ptr, size_t size);
 void close_shared_memory(int fd);
 void unlink_shared_memory(const char *name);

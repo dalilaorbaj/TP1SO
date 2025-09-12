@@ -1,11 +1,4 @@
-// This is a personal academic project. Dear PVS-Studio, please check it.
-// PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
-// This is a personal academic project. Dear PVS-Studio, please check it.
-// PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
-// This is a personal academic project. Dear PVS-Studio, please check it.
-// PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
-// This is a personal academic project. Dear PVS-Studio, please check it.
-// PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
+
 // This is a personal academic project. Dear PVS-Studio, please check it.
 // PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 #include "shared_memory.h"
@@ -109,7 +102,7 @@ int main(int argc, char *argv[])
         return EXIT_FAILURE;
     }
     
-    game_sync = map_shared_memory(shm_sync_fd, sizeof(game_sync_t));
+    game_sync = map_shared_memory(shm_sync_fd, sizeof(game_sync_t), false);
     if (game_sync == MAP_FAILED)
     {
         perror("map_shared_memory game_sync");
@@ -136,7 +129,7 @@ int main(int argc, char *argv[])
     }
     
     // Mapear la memoria compartida
-    game_state = map_shared_memory_readonly(shm_state_fd, shm_stat.st_size);
+    game_state = map_shared_memory(shm_state_fd, shm_stat.st_size, true);
     if (game_state == NULL)
     {
         perror("map_shared_memory game_state");
@@ -154,24 +147,30 @@ int main(int argc, char *argv[])
         return EXIT_FAILURE;
     }
     
+    bool gameOver = false;
+
     // Loop principal del juego
-    while (!game_state->game_over)
-    {   
-        // Esperar mi turno
+    do
+    {
+       // Esperar mi turno
         wait_player_turn(game_sync, player_id);
 
         /* Acá deberíamos entrar como readers en game_syc? */
         reader_enter(game_sync);
         
-        // Generar un movimiento aleatorio
-        move = generate_random_direction();
+        gameOver = game_state->game_over;
 
         /* Salir como readers de game_sync? */
         reader_exit(game_sync);
-
+        
+        // Generar un movimiento aleatorio
+        move = generate_random_direction();
+        
         // Enviar el movimiento
         write(pipe_write_fd, &move, sizeof(move));
-    }
+    } while (!gameOver);
+    
+
     
     cleanup_resources();
     return EXIT_SUCCESS;

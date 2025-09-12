@@ -146,7 +146,7 @@ int main(int argc, char *argv[])
         return EXIT_FAILURE;
     }
 
-    game_sync = map_shared_memory(shm_sync_fd, sizeof(game_sync_t));
+    game_sync = map_shared_memory(shm_sync_fd, sizeof(game_sync_t), false);
     if (game_sync == MAP_FAILED)
     {
         perror("map_shared_memory game_sync");
@@ -174,7 +174,7 @@ int main(int argc, char *argv[])
     }
 
     // Mapear la memoria compartida
-    game_state = map_shared_memory_readonly(shm_state_fd, shm_stat.st_size);
+    game_state = map_shared_memory(shm_state_fd, shm_stat.st_size, true);
     if (game_state == NULL)
     {
         perror("map_shared_memory game_state");

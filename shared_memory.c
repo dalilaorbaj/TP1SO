@@ -43,20 +43,13 @@ int open_shared_memory(const char* name, size_t size, int flags) {
     return fd;
 }
 
-void* map_shared_memory(int fd, size_t size) {
-    void* ptr = mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+
+void* map_shared_memory(int fd, size_t size, bool readonly) {
+    int prot = readonly ? PROT_READ : (PROT_READ | PROT_WRITE);
+    
+    void* ptr = mmap(NULL, size, prot, MAP_SHARED, fd, 0);
     if (ptr == MAP_FAILED) {
         perror("mmap");
-        return NULL;
-    }
-    
-    return ptr;
-}
-
-void* map_shared_memory_readonly(int fd, size_t size) {
-    void* ptr = mmap(NULL, size, PROT_READ, MAP_SHARED, fd, 0);
-    if (ptr == MAP_FAILED) {
-        perror("mmap readonly");
         return NULL;
     }
     
@@ -95,7 +88,7 @@ game_state_t* create_game_state(unsigned short width, unsigned short height) {
         return NULL;
     }
     
-    game_state_t* state = (game_state_t*)map_shared_memory(fd, size);
+    game_state_t* state = (game_state_t*)map_shared_memory(fd, size, false);
     if (state == NULL) {
         close_shared_memory(fd);
         unlink_shared_memory(GAME_STATE_NAME);
@@ -137,7 +130,7 @@ game_state_t* open_game_state(unsigned short width, unsigned short height) {
         return NULL;
     }
     
-    game_state_t* state = (game_state_t*)map_shared_memory(fd, size);
+    game_state_t* state = (game_state_t*)map_shared_memory(fd, size, false);
     if (state == NULL) {
         close_shared_memory(fd);
         return NULL;
@@ -164,7 +157,7 @@ game_sync_t* create_game_sync(unsigned int player_count) {
         return NULL;
     }
     
-    game_sync_t* sync = (game_sync_t*)map_shared_memory(fd, size);
+    game_sync_t* sync = (game_sync_t*)map_shared_memory(fd, size, false);
     if (sync == NULL) {
         close_shared_memory(fd);
         unlink_shared_memory(GAME_SYNC_NAME);
@@ -261,7 +254,7 @@ game_sync_t* open_game_sync(void) {
         return NULL;
     }
     
-    game_sync_t* sync = (game_sync_t*)map_shared_memory(fd, size);
+    game_sync_t* sync = (game_sync_t*)map_shared_memory(fd, size, false);
     if (sync == NULL) {
         close_shared_memory(fd);
         return NULL;

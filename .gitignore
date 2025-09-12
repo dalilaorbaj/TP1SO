@@ -11,3 +11,7 @@ view
 view_simple
 report.tasks
 *.log
+.viminfo
+Dockerfile
+.bashrc
+ChompChamps
