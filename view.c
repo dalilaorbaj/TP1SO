@@ -2,6 +2,8 @@
 // PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 // This is a personal academic project. Dear PVS-Studio, please check it.
 // PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
+// This is a personal academic project. Dear PVS-Studio, please check it.
+// PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 #include "shared_memory.h"
 #include "sync_utils.h"
 #include <stdio.h>
@@ -327,7 +329,7 @@ int main(int argc, char *argv[])
     
     // Loop principal
     bool gameOver = false;
-    do {
+    while(1){
         // Esperar notificación del master
         wait_view_notification(game_sync);
         
@@ -354,7 +356,7 @@ int main(int argc, char *argv[])
         
         // Pequeña pausa para no consumir CPU
         napms(50);
-    }while(!gameOver);
+    };
 
     napms(2000);
 
