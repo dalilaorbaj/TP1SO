@@ -49,7 +49,13 @@ int parse_arguments(int argc, char *argv[], unsigned short *width, unsigned shor
     {
         if (argv[i][0] == '-')
             break;
-        player_paths[(*num_players)++] = argv[i];
+        if(access(argv[i], X_OK) != 0) {
+            fprintf(stderr, "Error: No se puede ejecutar el jugador '%s': %s\n", argv[i], strerror(errno));
+            return -1;
+        }
+        else{
+            player_paths[(*num_players)++] = argv[i];
+        }
     }
 
     // Validaciones
