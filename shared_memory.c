@@ -206,7 +206,7 @@ game_sync_t* create_game_sync(unsigned int player_count) {
     
     // Inicializar semáforos de los jugadores
     for (unsigned int i = 0; i < player_count && i < MAX_PLAYERS; i++) {
-        if (sem_init(&sync->player_move_sem[i], 1, 1) == -1) {
+        if (sem_init(&sync->player_move_sem[i], 1, 0) == -1) {
             perror("sem_init player_move_sem");
             // Limpiar semáforos ya inicializados
             for (unsigned int j = 0; j < i; j++) {
