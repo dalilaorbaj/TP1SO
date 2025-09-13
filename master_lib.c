@@ -187,6 +187,8 @@ int create_player_processes(game_state_t *state, game_sync_t *game_sync, char *p
             cleanup_resources(state, game_sync, pipe_fds, i);
             return -1;
         }
+        fcntl(pipe_fds[i][0], F_SETFD, FD_CLOEXEC);
+        fcntl(pipe_fds[i][1], F_SETFD, FD_CLOEXEC);
         
         pid_t pid = fork();
         if (pid < 0)
@@ -256,6 +258,9 @@ pid_t create_view_process(game_state_t *state, game_sync_t *game_sync, char *vie
         char w_arg[16], h_arg[16];
         snprintf(w_arg, sizeof(w_arg), "%hu", width);
         snprintf(h_arg, sizeof(h_arg), "%hu", height);
+        for (int j = 0; j < num_players; ++j) {
+            close(pipe_fds[j][0]);
+        }
         execl(view_path, view_path, w_arg, h_arg, (char *)NULL);
         fprintf(stderr, "Error: no se pudo ejecutar vista %s: %s\n", view_path, strerror(errno));
         _exit(127);

@@ -15,6 +15,7 @@
 #include <math.h>
 #include "shared_memory.h"
 #include "sync_utils.h"
+#include <fcntl.h> 
 
 // Función para parsear argumentos del master
 int parse_arguments(int argc, char *argv[], unsigned short *width, unsigned short *height, unsigned int *delay_ms, unsigned int *timeout_s, unsigned int *seed, char **view_path, char *player_paths[], int *num_players);
