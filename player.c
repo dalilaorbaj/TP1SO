@@ -166,24 +166,17 @@ int main(int argc, char *argv[])
     // Loop principal del juego
     while(1)
     {
-       // Esperar mi turno
         wait_player_turn(game_sync, player_id);
 
-        /* Acá deberíamos entrar como readers en game_sync? */
         reader_enter(game_sync);
-        
         gameOver = game_state->game_over;
-
-        /* Salir como readers de game_sync? */
         reader_exit(game_sync);
 
         if(gameOver) {
             break;
         }
-        // Generar un movimiento aleatorio
-        move = generate_random_direction();
         
-        // Enviar el movimiento
+        move = generate_random_direction();
         write(pipe_write_fd, &move, sizeof(move));
     }
     
