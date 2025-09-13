@@ -90,7 +90,8 @@ bool all_players_blocked(game_state_t *state);
  * 
  * @return true si se debe continuar el juego, false si se debe terminar
  */
-bool handle_move_aftermath(game_sync_t *game_sync, bool has_view, int pipe_fds[][2], int i, bool move_valid, unsigned int delay_ms, bool all_blocked_flag, time_t *last_valid_time);
+//bool handle_move_aftermath(game_sync_t *game_sync, bool has_view, int pipe_fds[][2], int i, bool move_valid, unsigned int delay_ms, bool all_blocked_flag, time_t *last_valid_time);
+bool handle_move_aftermath(game_state_t *state, game_sync_t *game_sync, bool has_view, int pipe_fds[][2], int i, bool move_valid, unsigned int delay_ms, bool all_blocked_flag, time_t *last_valid_time);
 
 /**
  * Finaliza el juego, notifica a los procesos, muestra resultados y libera recursos.

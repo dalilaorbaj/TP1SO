@@ -132,7 +132,7 @@ int main(int argc, char *argv[])
         update_lock_status(state, DIR_OFFSETS, move_valid);
         all_blocked_flag = all_players_blocked(state);
         writer_exit(game_sync);
-        bool continue_game = handle_move_aftermath(game_sync, has_view, pipe_fds, i, move_valid, delay_ms, all_blocked_flag, &last_valid_time);
+        bool continue_game = handle_move_aftermath(state, game_sync, has_view, pipe_fds, i, move_valid, delay_ms, all_blocked_flag, &last_valid_time);
 
         if (!continue_game) {
             break;  // Salir del bucle principal
