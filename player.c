@@ -178,7 +178,6 @@ int main(int argc, char *argv[])
         reader_exit(game_sync);
 
         if(gameOver) {
-            reader_exit(game_sync);
             break;
         }
         // Generar un movimiento aleatorio
