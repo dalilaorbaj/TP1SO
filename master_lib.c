@@ -376,32 +376,6 @@ bool all_players_blocked(game_state_t *state) {
     }
     return true;
 }
-/*
-bool handle_move_aftermath(game_sync_t *game_sync, bool has_view, int pipe_fds[][2], int i, bool move_valid, unsigned int delay_ms, bool all_blocked_flag, time_t *last_valid_time) {
-    // Actualizar temporizador de último movimiento válido
-    if (move_valid) {
-        *last_valid_time = time(NULL);
-    }
-    
-    // Notificar al jugador i que se procesó su movimiento
-    if (pipe_fds[i][0] >= 0) {
-        allow_player_move(game_sync, i);
-    }
-    
-    // Notificar a la vista del cambio de estado (si está presente)
-    if (has_view) {
-        notify_view(game_sync);
-        wait_view_done(game_sync);
-    }
-    
-    // Esperar el delay configurado antes de procesar próximo movimiento
-    if (delay_ms > 0) {
-        usleep(delay_ms * 1000);
-    }
-    
-    // Si se alcanzó la condición de fin, indicar salida del bucle
-    return !all_blocked_flag;
-}*/
 
 bool handle_move_aftermath(game_state_t *state, game_sync_t *game_sync, bool has_view, int pipe_fds[][2], int i, bool move_valid, unsigned int delay_ms, bool all_blocked_flag, time_t *last_valid_time) {
     // Actualizar temporizador de último movimiento válido
@@ -432,7 +406,7 @@ bool handle_move_aftermath(game_state_t *state, game_sync_t *game_sync, bool has
 }
 
 int finalize_game(game_state_t *state, game_sync_t *game_sync, bool has_view, pid_t view_pid, int pipe_fds[][2], pid_t player_pids[], int num_players) {
-    // Marcar el fin del juego en el estado compartido
+    
     state->game_over = true;
     
     // Notificar a la vista si es que la misma existe
