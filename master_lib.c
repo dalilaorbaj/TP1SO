@@ -180,6 +180,10 @@ int create_player_processes(game_state_t *state, game_sync_t *game_sync, char *p
             {
                 kill(player_pids[j], SIGTERM);
             }
+            for (int j = 0; j < i; ++j) {
+                int st;
+                waitpid(player_pids[j], &st, 0);
+            }
             cleanup_resources(state, game_sync, pipe_fds, i);
             return -1;
         }
@@ -193,6 +197,10 @@ int create_player_processes(game_state_t *state, game_sync_t *game_sync, char *p
             for (int j = 0; j < i; ++j)
             {
                 kill(player_pids[j], SIGTERM);
+            }
+            for (int j = 0; j < i; ++j) {
+                int st;
+                waitpid(player_pids[j], &st, 0);
             }
             cleanup_resources(state, game_sync, pipe_fds, i);
             return -1;
@@ -234,6 +242,10 @@ pid_t create_view_process(game_state_t *state, game_sync_t *game_sync, char *vie
         // Terminar jugadores en caso de fallo
         for (int j = 0; j < num_players; ++j) {
             kill(player_pids[j], SIGTERM);
+        }
+        for (int j = 0; j < num_players; ++j) {
+            int st;
+            waitpid(player_pids[j], &st, 0);
         }
         cleanup_resources(state, game_sync, pipe_fds, num_players);
         return -1;
