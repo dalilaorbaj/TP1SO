@@ -309,6 +309,11 @@ int search_pipe_ready(fd_set *readfds, int pipe_fds[][2], int num_players, int *
 }
 
 bool process_player_move(game_state_t *state, int player_idx, unsigned char direction, const int dir_offsets[8][2]) {
+    
+    if(state->players[player_idx].is_blocked) {
+        return false;
+    }
+    
     if (direction > 7) {
         // Movimiento fuera de rango
         state->players[player_idx].invalid_moves++;
