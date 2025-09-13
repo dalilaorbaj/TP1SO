@@ -220,7 +220,7 @@ game_sync_t* create_game_sync(unsigned int player_count) {
             goto cleanup;
         }
     }
-    
+     
     // Inicializar el resto de semáforos de jugadores con 0 (no usados)
     for (unsigned int i = player_count; i < MAX_PLAYERS; i++) {
         if (sem_init(&sync->player_move_sem[i], 1, 0) == -1) {

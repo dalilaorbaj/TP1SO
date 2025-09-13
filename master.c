@@ -1,7 +1,5 @@
 // This is a personal academic project. Dear PVS-Studio, please check it.
 // PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
-// This is a personal academic project. Dear PVS-Studio, please check it.
-// PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 #include "master_lib.h"
 
 // Desplazamientos de dirección (0 = arriba, 1 = arriba-derecha, ... sentido horario)
@@ -41,8 +39,6 @@ int main(int argc, char *argv[])
         return EXIT_FAILURE;
 
     initialize_game_state(state, player_paths, num_players, seed);
-
-    initialize_semaphores(game_sync, num_players);
 
     // Crear pipes y procesos jugador
     int pipe_fds[MAX_PLAYERS][2];

@@ -4,8 +4,6 @@
 
 #include "shared_memory.h"
 
-void initialize_semaphores(game_sync_t* sync, int num_players);
-
 // Funciones para sincronización lectores-escritores (evita inanición del escritor)
 void writer_enter(game_sync_t* sync);
 void writer_exit(game_sync_t* sync);
