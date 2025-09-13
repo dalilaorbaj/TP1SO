@@ -430,7 +430,7 @@ int finalize_game(game_state_t *state, game_sync_t *game_sync, bool has_view, pi
     // Marcar el fin del juego en el estado compartido
     state->game_over = true;
     
-    // Notificar a la vista si existe
+    // Notificar a la vista si es que la misma existe
     if (has_view) {
         notify_view(game_sync);
         wait_view_done(game_sync);
@@ -458,111 +458,23 @@ int finalize_game(game_state_t *state, game_sync_t *game_sync, bool has_view, pi
             printf("View terminated abnormally\n");
         }
     }
-                // Esperar por cada proceso jugador y mostrar sus estadísticas
-            for (int i = 0; i < num_players; ++i) {
-                int player_status;
-                waitpid(player_pids[i], &player_status, 0);
-                printf("Player %s (%d) exited (%d) with a score of %u / %u valid moves / %u invalid moves\n",
-                       state->players[i].player_name, i, WEXITSTATUS(player_status),
-                       state->players[i].score,
-                       state->players[i].valid_moves,
-                       state->players[i].invalid_moves);
-            }
+
+    // Esperar a cada proceso jugador y mostrar sus estadísticas
+    for (int i = 0; i < num_players; ++i) {
+        int player_status;
+        waitpid(player_pids[i], &player_status, 0);
+        printf("Player %s (%d) exited (%d) with a score of %u / %u valid moves / %u invalid moves\n",
+            state->players[i].player_name, i, WEXITSTATUS(player_status),
+            state->players[i].score,
+            state->players[i].valid_moves,
+            state->players[i].invalid_moves);
+    }
 
     // Limpieza final de recursos
     cleanup_resources(state, game_sync, pipe_fds, num_players);
     
     return EXIT_SUCCESS;
 }
-
-/*
-int finalize_game(game_state_t *state, game_sync_t *game_sync, bool has_view, pid_t view_pid, int pipe_fds[][2], pid_t player_pids[], int num_players) {
-    // Marcar el fin del juego en el estado compartido
-    state->game_over = true;
-    
-    // Notificar a la vista si existe
-    if (has_view) {
-        notify_view(game_sync);
-        wait_view_done(game_sync);
-    }
-    
-    // Despertar a los jugadores que puedan estar esperando
-    for (int i = 0; i < num_players; ++i) {
-        if (pipe_fds[i][0] >= 0) {
-            allow_player_move(game_sync, i);
-        }
-    }
-
-    // Esperar a que terminen los procesos y mostrar resultados
-    if (has_view) {
-        int status;
-        waitpid(view_pid, &status, 0);
-        
-        if (WIFEXITED(status)) {
-            printf("View exited (%d)\n", WEXITSTATUS(status));
-            
-            // Esperar por cada proceso jugador y mostrar sus estadísticas
-            for (int i = 0; i < num_players; ++i) {
-                int player_status;
-                waitpid(player_pids[i], &player_status, 0);
-                printf("Player %s (%d) exited (%d) with a score of %u / %u valid moves / %u invalid moves\n",
-                       state->players[i].player_name, i, WEXITSTATUS(player_status),
-                       state->players[i].score,
-                       state->players[i].valid_moves,
-                       state->players[i].invalid_moves);
-            }
-        }
-        else if (WIFSIGNALED(status)) {
-            printf("View terminated by signal (%d)\n", WTERMSIG(status));
-        }
-        else {
-            printf("View terminated abnormally\n");
-        }
-    }
-
-    // Limpieza final de recursos
-    cleanup_resources(state, game_sync, pipe_fds, num_players);
-    
-    return EXIT_SUCCESS;
-}*/
-
-/*
-int finalize_game(game_state_t *state, game_sync_t *game_sync, bool has_view, pid_t view_pid, int pipe_fds[][2], pid_t player_pids[], int num_players) {
-    state->game_over = true;
-
-    if (has_view) {
-        notify_view(game_sync);
-        wait_view_done(game_sync);
-
-        int status;
-        waitpid(view_pid, &status, 0);
-
-        if (WIFEXITED(status)) {
-            printf("View exited (%d)\n", WEXITSTATUS(status));
-        }
-        else if (WIFSIGNALED(status)) {
-            printf("View terminated by signal (%d)\n", WTERMSIG(status));
-        }
-        else {
-            printf("View terminated abnormally\n");
-        }
-    }
-
-    // Esperar SIEMPRE a los jugadores y mostrar sus estadísticas
-    for (int i = 0; i < num_players; ++i) {
-        int player_status;
-        waitpid(player_pids[i], &player_status, 0);
-        printf("Player %s (%d) exited (%d) con score %u / %u valid moves / %u invalid moves\n",
-               state->players[i].player_name, i, WEXITSTATUS(player_status),
-               state->players[i].score,
-               state->players[i].valid_moves,
-               state->players[i].invalid_moves);
-    }
-
-    cleanup_resources(state, game_sync, pipe_fds, num_players);
-    return EXIT_SUCCESS;
-}*/
-
 
 int check_game_status(game_state_t *state) {
     if (state == NULL) {

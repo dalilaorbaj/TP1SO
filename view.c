@@ -76,6 +76,16 @@ void signal_handler(int sig)
     exit(EXIT_SUCCESS);
 }
 
+void setup_signal_handlers() {
+    struct sigaction sa;
+    sa.sa_handler = signal_handler;
+    sigemptyset(&sa.sa_mask);
+    sa.sa_flags = SA_RESTART;
+
+    sigaction(SIGINT, &sa, NULL);
+    sigaction(SIGTERM, &sa, NULL);
+}
+
 void print_colored_text(WINDOW *win, int y, int x, int color_pair, const char *format, ...)
 {
     va_list args;
@@ -225,8 +235,10 @@ void draw_legend(WINDOW *win, unsigned short player_count, player_t players[])
 int main(int argc, char *argv[])
 {
     // Registrar manejadores de señales
-    signal(SIGINT, signal_handler);
-    signal(SIGTERM, signal_handler);
+    /*signal(SIGINT, signal_handler);
+    signal(SIGTERM, signal_handler);*/
+    setup_signal_handlers();
+
 
     // Abrir memoria compartida de sincronización (primero)
     shm_sync_fd = open_shared_memory(GAME_SYNC_NAME, sizeof(game_sync_t), O_RDWR);

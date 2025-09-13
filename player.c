@@ -56,10 +56,21 @@ void cleanup_resources()
     }
 }
 
+
 void signal_handler(int sig)
 {
     cleanup_resources();
     exit(EXIT_SUCCESS);
+}
+
+void setup_signal_handlers() {
+    struct sigaction sa;
+    sa.sa_handler = signal_handler;
+    sigemptyset(&sa.sa_mask);
+    sa.sa_flags = SA_RESTART;
+
+    sigaction(SIGINT, &sa, NULL);
+    sigaction(SIGTERM, &sa, NULL);
 }
 
 // Inicializa la semilla aleatoria una sola vez al inicio del programa
@@ -90,8 +101,9 @@ int main(int argc, char *argv[])
     init_random_seed();
 
     // Registrar manejadores de señales
-    signal(SIGINT, signal_handler);
-    signal(SIGTERM, signal_handler);
+    //signal(SIGINT, signal_handler);
+    //signal(SIGTERM, signal_handler);
+    setup_signal_handlers();
 
     
     // Abrir memoria compartida de sincronización
