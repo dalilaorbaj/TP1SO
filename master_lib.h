@@ -46,13 +46,10 @@ int create_player_processes(game_state_t *state, game_sync_t *game_sync, char *p
  * @param view_path Ruta al ejecutable de vista (NULL si no se usa vista)
  * @param width Ancho del tablero
  * @param height Alto del tablero
- * @param player_pids Array de PIDs de los jugadores (para limpieza en caso de error)
- * @param num_players Número de jugadores
- * @param pipe_fds Array de pipes de los jugadores (para limpieza en caso de error)
  * 
  * @return PID del proceso vista si se creó correctamente, -1 en caso contrario
  */
-pid_t create_view_process(game_state_t *state, game_sync_t *game_sync, char *view_path, unsigned short width, unsigned short height, pid_t player_pids[], int num_players, int pipe_fds[][2]);
+pid_t create_view_process(game_state_t *state, game_sync_t *game_sync, char *view_path, unsigned short width, unsigned short height);
 
 long calculate_remaining_time(time_t last_valid_time, unsigned int timeout_s);
 

@@ -234,7 +234,7 @@ int create_player_processes(game_state_t *state, game_sync_t *game_sync, char *p
     return 0;
 }
 
-pid_t create_view_process(game_state_t *state, game_sync_t *game_sync, char *view_path, unsigned short width, unsigned short height, pid_t player_pids[], int num_players, int pipe_fds[][2]) {
+pid_t create_view_process(game_state_t *state, game_sync_t *game_sync, char *view_path, unsigned short width, unsigned short height) {
     if (view_path == NULL) {
         return -1;  // No se especificó vista
     }
@@ -242,26 +242,14 @@ pid_t create_view_process(game_state_t *state, game_sync_t *game_sync, char *vie
     pid_t vpid = fork();
     if (vpid < 0) {
         perror("fork (vista)");
-        // Terminar jugadores en caso de fallo
-        for (int j = 0; j < num_players; ++j) {
-            kill(player_pids[j], SIGTERM);
-        }
-        for (int j = 0; j < num_players; ++j) {
-            int st;
-            waitpid(player_pids[j], &st, 0);
-        }
-        cleanup_resources(state, game_sync, pipe_fds, num_players);
         return -1;
     }
     
     if (vpid == 0) {
         // Proceso hijo (vista)
         char w_arg[16], h_arg[16];
-        snprintf(w_arg, sizeof(w_arg), "%hu", width);
-        snprintf(h_arg, sizeof(h_arg), "%hu", height);
-        for (int j = 0; j < num_players; ++j) {
-            close(pipe_fds[j][0]);
-        }
+        snprintf(w_arg, sizeof w_arg, "%hu", width);
+        snprintf(h_arg, sizeof h_arg, "%hu", height);
         execl(view_path, view_path, w_arg, h_arg, (char *)NULL);
         fprintf(stderr, "Error: no se pudo ejecutar vista %s: %s\n", view_path, strerror(errno));
         _exit(127);

@@ -38,24 +38,30 @@ int main(int argc, char *argv[])
 
     initialize_game_state(state, player_paths, num_players, seed);
 
+    // Crear proceso vista (si corresponde)
+   pid_t view_pid = -1;
+    bool has_view = (view_path != NULL);
+
+    if (has_view) {
+        view_pid = create_view_process(state, game_sync, view_path, width, height);
+        if (view_pid == -1) {
+            fprintf(stderr, "Error al crear proceso de vista. Continuando sin vista.\n");
+            has_view = false;
+        }
+    }
     // Crear pipes y procesos jugador
     int pipe_fds[MAX_PLAYERS][2];
     pid_t player_pids[MAX_PLAYERS];
 
     if (create_player_processes(state, game_sync, player_paths, num_players, pipe_fds, player_pids) != 0) {
+        // Si la vista se creó correctamente, necesitamos limpiarla antes de salir
+        if (has_view && view_pid > 0) {
+            kill(view_pid, SIGTERM);
+            waitpid(view_pid, NULL, 0);
+        }
         return EXIT_FAILURE;
     }
 
-    // Crear proceso vista (si corresponde)
-    pid_t view_pid = -1;
-    bool has_view = (view_path != NULL);
-
-    if (has_view) {
-        view_pid = create_view_process(state, game_sync, view_path, width, height, player_pids, num_players, pipe_fds);
-        if (view_pid == -1) {
-            return EXIT_FAILURE;
-        }
-    }
 
     for (int i = 0; i < num_players; ++i){
         allow_player_move(game_sync, i);
