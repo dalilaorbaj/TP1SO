@@ -99,6 +99,7 @@ void cleanup_resources(game_state_t *state, game_sync_t *sync, int pipe_fds[][2]
 }
 
 void initialize_game_state(game_state_t *state, char *player_paths[MAX_PLAYERS], int num_players, unsigned int seed){
+    
     state->player_count = num_players;
     state->game_over = false;
 
