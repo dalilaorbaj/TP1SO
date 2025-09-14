@@ -66,7 +66,7 @@ Esto genera los ejecutables:
 ### Tablero
 - Tablero 2D con celdas que contienen recompensas (valores 1-9)
 - Los jugadores capturan celdas moviéndose sobre ellas
-- Las celdas capturadas se marcan con el ID del jugador
+- Las celdas capturadas se marcan con el símbolo **##** el color que le corresponde al jugador que la capturó
 
 ### Movimientos
 - 8 direcciones posibles (0-7):
