@@ -412,7 +412,9 @@ bool handle_move_aftermath(game_state_t *state, game_sync_t *game_sync, bool has
 
 int finalize_game(game_state_t *state, game_sync_t *game_sync, bool has_view, pid_t view_pid, int pipe_fds[][2], pid_t player_pids[], int num_players) {
     
+    writer_enter(game_sync);
     state->game_over = true;
+    writer_exit(game_sync);
     
     // Notificar a la vista si es que la misma existe
     if (has_view) {

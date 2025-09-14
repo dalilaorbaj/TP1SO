@@ -218,6 +218,7 @@ int main(int argc, char *argv[])
     }
 
     printf("Game over!\n");
+    notify_view_done(game_sync);
     cleanup_resources();
     return EXIT_SUCCESS;
 }

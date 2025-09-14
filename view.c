@@ -337,8 +337,7 @@ int main(int argc, char *argv[])
         return EXIT_FAILURE;
     }
     
-    // Notificar al master que estamos listos
-    notify_view_done(game_sync);
+    notify_view_done(game_sync);  // Avisar al master que está lista
     
     // Loop principal
     bool gameOver = false;
@@ -355,7 +354,6 @@ int main(int argc, char *argv[])
         draw_board(board_win, game_state);
         draw_scoreboard(scoreboard_win, game_state);
         draw_legend(legend_win, player_count, game_state->players);
-    
         doupdate();  // Actualizar todas las ventanas
 
         notify_view_done(game_sync); // Notificar al master que hemos terminado
