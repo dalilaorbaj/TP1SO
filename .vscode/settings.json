@@ -1,6 +1,0 @@
-{
-    "files.associations": {
-        "aux_lib.h": "c",
-        "shared_memory.h": "c"
-    }
-}
