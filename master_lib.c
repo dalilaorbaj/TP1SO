@@ -254,9 +254,24 @@ pid_t create_view_process(game_state_t *state, game_sync_t *game_sync, char *vie
         fprintf(stderr, "Error: no se pudo ejecutar vista %s: %s\n", view_path, strerror(errno));
         _exit(127);
     }
+
+    // Proceso padre: verificar si el hijo terminó prematuramente
+    usleep(50000);  // 50ms para permitir que el proceso arranque
+    
+    int status;
+    pid_t result = waitpid(vpid, &status, WNOHANG);
+    
+    if (result == vpid) {
+        // El proceso vista terminó prematuramente
+        if (WIFEXITED(status)) {
+            fprintf(stderr, "Error: La vista terminó con código %d\n", WEXITSTATUS(status));
+        } else if (WIFSIGNALED(status)) {
+            fprintf(stderr, "Error: La vista terminó por señal %d\n", WTERMSIG(status));
+        }
+        return -1;
+    }
     
     // Proceso padre: sincronización con la vista
-    notify_view(game_sync);
     wait_view_done(game_sync);
     
     return vpid;
