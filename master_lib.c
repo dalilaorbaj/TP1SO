@@ -447,6 +447,7 @@ int finalize_game(game_state_t *state, game_sync_t *game_sync, bool has_view, pi
     }
 
     // Esperar a cada proceso jugador y mostrar sus estadísticas
+    int winner_idx = 0;
     for (int i = 0; i < num_players; ++i) {
         int player_status;
         waitpid(player_pids[i], &player_status, 0);
@@ -455,7 +456,22 @@ int finalize_game(game_state_t *state, game_sync_t *game_sync, bool has_view, pi
             state->players[i].score,
             state->players[i].valid_moves,
             state->players[i].invalid_moves);
+
+        for (int j = 1; j < num_players; ++j) {
+            if (state->players[j].score > state->players[winner_idx].score) {
+                winner_idx = j;
+            } else if (state->players[j].score == state->players[winner_idx].score) {
+                if (state->players[j].valid_moves < state->players[winner_idx].valid_moves) {
+                    winner_idx = j;
+                } else if (state->players[j].valid_moves == state->players[winner_idx].valid_moves) {
+                    if (state->players[j].invalid_moves < state->players[winner_idx].invalid_moves) {
+                        winner_idx = j;
+                    }
+                }
+            }
+        }
     }
+    printf("The winner is: %s %d\n", state->players[winner_idx].player_name, winner_idx);
 
     // Limpieza final de recursos
     cleanup_resources(state, game_sync, pipe_fds, num_players);
