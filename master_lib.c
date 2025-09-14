@@ -7,23 +7,35 @@ static void print_usage(const char *progname)
     fprintf(stderr, "Uso: %s [-w ancho] [-h alto] [-d delay_ms] [-t timeout_s] [-s semilla] [-v ruta_vista] -p jugador1 [jugador2 ...]\n", progname);
 }
 
+static int invalid_dimension(unsigned short value, const char* dimension_name) {
+    fprintf(stderr, "Error: El %s mínimo es 10 (valor proporcionado: %u)\n", 
+            dimension_name, value);
+    return -1;
+}
+
 int parse_arguments(int argc, char *argv[], unsigned short *width, unsigned short *height, unsigned int *delay_ms, unsigned int *timeout_s, unsigned int *seed, char **view_path, char *player_paths[], int *num_players)
 {
     // Procesar opciones
-    int opt;
+    bool p_flag_present = false;
+    int opt; 
+    unsigned short new_width, new_height;
     while ((opt = getopt(argc, argv, "w:h:d:t:s:v:p")) != -1)
     {
         switch (opt)
         {
         case 'w':
-            unsigned short new_width = atoi(optarg);
-            if (new_width > 10)
-                *width = new_width;
+            new_width = atoi(optarg);
+            if(new_width < 10) {
+                return invalid_dimension(new_width, "ancho");
+            }
+            *width = new_width;
             break;
         case 'h':
-            unsigned short new_height = atoi(optarg);
-            if (new_height > 10)
-                *height = new_height;
+            new_height = atoi(optarg);
+            if(new_height < 10) {
+                return invalid_dimension(new_height, "alto");
+            }
+            *height = new_height;
             break;
         case 'd':
             *delay_ms = (unsigned int)atoi(optarg);
@@ -38,13 +50,18 @@ int parse_arguments(int argc, char *argv[], unsigned short *width, unsigned shor
             *view_path = optarg;
             break;
         case 'p':
-            // Solo marcador, jugadores procesados después
+            p_flag_present = true;
             break;
         default:
             print_usage(argv[0]);
             return -1;
         }
     }
+    if (!p_flag_present) {
+    fprintf(stderr, "Error: Debe usar el flag -p para especificar jugadores\n");
+    print_usage(argv[0]);
+    return -1;
+}
 
     // Recoger jugadores
     for (int i = optind; i < argc && *num_players < MAX_PLAYERS; ++i)

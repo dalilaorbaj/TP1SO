@@ -15,3 +15,7 @@ report.tasks
 Dockerfile
 .bashrc
 ChompChamps
+.config/PVS-Studio
+.config
+.vscode
+.cache
