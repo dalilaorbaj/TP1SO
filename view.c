@@ -317,8 +317,6 @@ int main(int argc, char *argv[])
     
     int board_height = height + 2;  // +2 para los bordes
     int board_width = width * 3 + 4;  // 3 caracteres por celda + bordes
-
-    
     
     int scoreboard_height = player_count + 2;  // +2 para los bordes
     int scoreboard_width = max_x - 2;  // Ancho casi completo
@@ -340,14 +338,14 @@ int main(int argc, char *argv[])
     notify_view_done(game_sync);  // Avisar al master que está lista
     
     // Loop principal
-    bool gameOver = false;
+    bool game_over_aux = false;
     while(1){
         // Esperar notificación del master
         wait_view_notification(game_sync);
         
         // Lectura segura del estado del juego
         reader_enter(game_sync);
-        gameOver = game_state->game_over;
+        game_over_aux = game_state->game_over;
         reader_exit(game_sync);
 
         // Actualizar la interfaz
@@ -358,7 +356,7 @@ int main(int argc, char *argv[])
 
         notify_view_done(game_sync); // Notificar al master que hemos terminado
 
-        if(gameOver) {
+        if(game_over_aux) {
             break;
         }
         

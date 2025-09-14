@@ -87,7 +87,7 @@ int main(int argc, char *argv[])
             perror("select");
             break;
         }
-        if (res == 0){
+        else if (res == 0){
             // Se agotó el tiempo sin movimientos válidos
             break;
         }
@@ -100,28 +100,21 @@ int main(int argc, char *argv[])
         unsigned char move;
         ssize_t nread = read(pipe_fds[i][0], &move, 1);
         if (nread <= 0){
-            if (nread == 0){ // EOF: el jugador i terminó (cerró pipe)
+            if (nread == 0){ // EOF
+                writer_enter(game_sync);
                 state->players[i].is_blocked = true;
+                all_blocked_flag = all_players_blocked(state);
+                writer_exit(game_sync);
+
                 close(pipe_fds[i][0]);
                 pipe_fds[i][0] = -1;
-                
-                all_blocked_flag = all_players_blocked(state);
+
                 if (!all_blocked_flag) {
                     continue;
                 }
             }
-            else{
-                perror("read");
-                continue;
-            }
         }
-        if (nread <= 0){
-            // Salir del bucle si todos bloqueados debido a EOF
-            if (all_blocked_flag)
-                break;
-            else
-                continue;
-        }
+
     
         unsigned char direction = move;
 

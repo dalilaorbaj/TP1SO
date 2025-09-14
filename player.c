@@ -161,7 +161,7 @@ int main(int argc, char *argv[])
         return EXIT_FAILURE;
     }
     
-    bool gameOver = false;
+    bool game_over_aux = false;
 
     // Loop principal del juego
     while(1)
@@ -169,10 +169,10 @@ int main(int argc, char *argv[])
         wait_player_turn(game_sync, player_id);
 
         reader_enter(game_sync);
-        gameOver = game_state->game_over;
+        game_over_aux = game_state->game_over;
         reader_exit(game_sync);
         
-        if(gameOver) {
+        if(game_over_aux) {
             break;
         }
         
