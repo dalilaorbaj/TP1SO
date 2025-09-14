@@ -62,6 +62,7 @@ void cleanup_resources()
 
 void signal_handler(int sig)
 {
+    notify_view_done(game_sync);
     cleanup_resources();
     exit(EXIT_SUCCESS);
 }

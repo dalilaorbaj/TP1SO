@@ -171,7 +171,7 @@ int main(int argc, char *argv[])
         reader_enter(game_sync);
         gameOver = game_state->game_over;
         reader_exit(game_sync);
-
+        
         if(gameOver) {
             break;
         }
@@ -181,7 +181,6 @@ int main(int argc, char *argv[])
     }
     
 
-    
     cleanup_resources();
     return EXIT_SUCCESS;
 }

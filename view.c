@@ -72,6 +72,7 @@ void cleanup_resources(void)
 
 void signal_handler(int sig)
 {
+    notify_view_done(game_sync);
     cleanup_resources();
     exit(EXIT_SUCCESS);
 }
@@ -347,24 +348,21 @@ int main(int argc, char *argv[])
         
         // Lectura segura del estado del juego
         reader_enter(game_sync);
-
         gameOver = game_state->game_over;
-        if(gameOver) {
-            reader_exit(game_sync);
-            break;
-        }
-        
+        reader_exit(game_sync);
+
         // Actualizar la interfaz
         draw_board(board_win, game_state);
         draw_scoreboard(scoreboard_win, game_state);
         draw_legend(legend_win, player_count, game_state->players);
-        
+    
         doupdate();  // Actualizar todas las ventanas
-        
-        reader_exit(game_sync);
-        
-        // Notificar al master que hemos terminado
-        notify_view_done(game_sync);
+
+        notify_view_done(game_sync); // Notificar al master que hemos terminado
+
+        if(gameOver) {
+            break;
+        }
         
         // Pequeña pausa para no consumir CPU
         napms(50);
