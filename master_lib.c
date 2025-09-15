@@ -13,7 +13,7 @@ static int invalid_dimension(unsigned short value, const char* dimension_name) {
 
 int parse_arguments(int argc, char *argv[], unsigned short *width, unsigned short *height, unsigned int *delay_ms, unsigned int *timeout_s, unsigned int *seed, char **view_path, char *player_paths[], int *num_players)
 {
-    // Procesar opciones
+    // Procesar opciones de posibles argumentos
     bool p_flag_present = false;
     int opt; 
     unsigned short new_width, new_height;
@@ -61,7 +61,6 @@ int parse_arguments(int argc, char *argv[], unsigned short *width, unsigned shor
     return -1;
 }
 
-    // Recoger jugadores
     for (int i = optind; i < argc && *num_players < MAX_PLAYERS; ++i)
     {
         if (argv[i][0] == '-')
@@ -75,7 +74,6 @@ int parse_arguments(int argc, char *argv[], unsigned short *width, unsigned shor
         }
     }
 
-    // Validaciones
     if (*num_players < 1)
     {
         fprintf(stderr, "Error: Debe especificar al menos un jugador\n");
@@ -87,7 +85,7 @@ int parse_arguments(int argc, char *argv[], unsigned short *width, unsigned shor
 
 void cleanup_resources(game_state_t *state, game_sync_t *sync, int pipe_fds[][2], int num_players)
 {
-    // Cerrar pipes
+    // Cerrar los pipes
     for (int i = 0; i < num_players; ++i)
     {
         if (pipe_fds[i][0] >= 0)
@@ -96,7 +94,6 @@ void cleanup_resources(game_state_t *state, game_sync_t *sync, int pipe_fds[][2]
             close(pipe_fds[i][1]);
     }
 
-    // Usar funciones de librería para cleanup
     if (sync != NULL)
     {
         cleanup_semaphores(sync, num_players);
@@ -108,7 +105,6 @@ void cleanup_resources(game_state_t *state, game_sync_t *sync, int pipe_fds[][2]
         close_game_state(state, state->board_width, state->board_height);
     }
 
-    // Limpiar shared memory
     unlink_shared_memory(GAME_STATE_NAME);
     unlink_shared_memory(GAME_SYNC_NAME);
 }
@@ -118,19 +114,16 @@ void initialize_game_state(game_state_t *state, char *player_paths[MAX_PLAYERS],
     state->player_count = num_players;
     state->game_over = false;
 
-    // Posicionar jugadores de forma determinística con margen similar
     for (int i = 0; i < num_players; ++i)
     {
         player_t *p = &state->players[i];
 
-        // Nombre (basename de la ruta del ejecutable)
         const char *path = player_paths[i];
         const char *basename = strrchr(path, '/');
         basename = (basename ? basename + 1 : path);
         strncpy(p->player_name, basename, MAX_NAME_LENGTH - 1);
         p->player_name[MAX_NAME_LENGTH - 1] = '\0';
 
-        // Posicionar jugadores de forma determinística
         int grid_rows = (int)ceil(sqrt(num_players));
         if (grid_rows < 1)
             grid_rows = 1;
@@ -251,7 +244,7 @@ int create_player_processes(game_state_t *state, game_sync_t *game_sync, char *p
 
 pid_t create_view_process(game_state_t *state, game_sync_t *game_sync, char *view_path, unsigned short width, unsigned short height) {
     if (view_path == NULL) {
-        return -1;  // No se especificó vista
+        return -1; 
     }
     
     pid_t vpid = fork();
@@ -270,14 +263,14 @@ pid_t create_view_process(game_state_t *state, game_sync_t *game_sync, char *vie
         _exit(127);
     }
 
-    // Proceso padre: verificar si el hijo terminó prematuramente
-    usleep(50000);  // 50ms para permitir que el proceso arranque
+    // Proceso padre chequeamos si el hijo terminó prematuramente
+    usleep(50000);  // 50ms para que el proceso arranque
     
     int status;
     pid_t result = waitpid(vpid, &status, WNOHANG);
     
     if (result == vpid) {
-        // El proceso vista terminó prematuramente
+        // El proceso vista efectivamente terminó prematuramente
         if (WIFEXITED(status)) {
             fprintf(stderr, "Error: La vista terminó con código %d\n", WEXITSTATUS(status));
         } else if (WIFSIGNALED(status)) {
@@ -286,7 +279,7 @@ pid_t create_view_process(game_state_t *state, game_sync_t *game_sync, char *vie
         return -1;
     }
     
-    // Proceso padre: sincronización con la vista
+    // Proceso padre, sincronización con la vista
     wait_view_done(game_sync);
     
     return vpid;
@@ -298,8 +291,6 @@ long calculate_remaining_time(time_t last_valid_time, unsigned int timeout_s) {
     return (long)timeout_s - elapsed;
 }
 
-// Parámetros: &readfds, pipe_fds, num_players
-// Retorna: maxfd (int)
 int configure_fd_set(fd_set *readfds, int pipe_fds[][2], int num_players) {
     FD_ZERO(readfds);
     int maxfd = -1;
@@ -314,8 +305,6 @@ int configure_fd_set(fd_set *readfds, int pipe_fds[][2], int num_players) {
     return maxfd;
 }
 
-// Parámetros: &readfds, pipe_fds, num_players, &start_index
-// Retorna: índice del jugador listo (int)
 int search_pipe_ready(fd_set *readfds, int pipe_fds[][2], int num_players, int *start_index) {
     for (int j = 0; j < num_players; ++j) {
         int idx = (*start_index + j) % num_players;
@@ -354,7 +343,6 @@ bool process_player_move(game_state_t *state, int player_idx, unsigned char dire
     
     int target_val = state->board[new_y * state->board_width + new_x];
     if (target_val <= 0) {
-        // La celda destino no está libre (ocupada/capturada)
         state->players[player_idx].invalid_moves++;
         return false;
     }
@@ -369,8 +357,6 @@ bool process_player_move(game_state_t *state, int player_idx, unsigned char dire
     return true;
 }
 
-// Parámetros: state, i, direction, DIR_OFFSETS
-// Retorna: true si el movimiento fue válido, false si no
 void update_lock_status(game_state_t *state, const int DIR_OFFSETS[8][2], bool move_valid) {
     for (int i = 0; i < state->player_count; ++i) {
         if (move_valid && !state->players[i].is_blocked) {
@@ -414,18 +400,15 @@ bool handle_move_aftermath(game_state_t *state, game_sync_t *game_sync, bool has
         }
     }
     
-    // Notificar a la vista del cambio de estado (si está presente)
     if (has_view) {
         notify_view(game_sync);
         wait_view_done(game_sync);
     }
     
-    // Esperar el delay configurado antes de procesar próximo movimiento
     if (delay_ms > 0) {
         usleep(delay_ms * 1000);
     }
     
-    // Si se alcanzó la condición de fin, indicar salida del bucle
     return !all_blocked_flag;
 }
 
@@ -435,7 +418,6 @@ int finalize_game(game_state_t *state, game_sync_t *game_sync, bool has_view, pi
     state->game_over = true;
     writer_exit(game_sync);
     
-    // Notificar a la vista si es que la misma existe
     if (has_view) {
         notify_view(game_sync);
         wait_view_done(game_sync);
@@ -491,7 +473,6 @@ int finalize_game(game_state_t *state, game_sync_t *game_sync, bool has_view, pi
     }
     printf("The winner is: %s %d\n", state->players[winner_idx].player_name, winner_idx);
 
-    // Limpieza final de recursos
     cleanup_resources(state, game_sync, pipe_fds, num_players);
     
     return EXIT_SUCCESS;
