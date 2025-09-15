@@ -37,7 +37,7 @@ void cleanup_resources()
         game_sync = NULL;
     }
 
-    // Cerrar file descriptors
+    // Cerrar FD's
     if (shm_state_fd != -1)
     {
         close_shared_memory(shm_state_fd);
@@ -50,7 +50,6 @@ void cleanup_resources()
         shm_sync_fd = -1;
     }
 }
-
 
 void signal_handler(int sig)
 {
@@ -68,19 +67,16 @@ void setup_signal_handlers() {
     sigaction(SIGTERM, &sa, NULL);
 }
 
-// Inicializa la semilla aleatoria una sola vez al inicio del programa
 void init_random_seed(void) {
     struct timespec ts;
     clock_gettime(CLOCK_MONOTONIC, &ts);
     srandom((unsigned int)(ts.tv_sec ^ ts.tv_nsec));
 }
 
-// Llama a esta función cada vez que necesites un número aleatorio
 unsigned char generate_random_direction(void) {
     return (unsigned char)(random() % 8);
 }
 
-// Función para encontrar mi ID de jugador
 int find_my_player_id() {
     pid_t my_pid = getpid();
     for (int i = 0; i < game_state->player_count; i++) {
@@ -95,9 +91,7 @@ int main(int argc, char *argv[])
 {
     init_random_seed();
 
-    // Registrar manejadores de señales
     setup_signal_handlers();
-
     
     // Abrir memoria compartida de sincronización
     shm_sync_fd = open_shared_memory(GAME_SYNC_NAME, sizeof(game_sync_t), O_RDWR);
@@ -126,7 +120,7 @@ int main(int argc, char *argv[])
         return EXIT_FAILURE;
     }
     
-    // Obtener el tamaño real de la memoria compartida
+    // tamaño real de la memoria compartida
     struct stat shm_stat;
     if (fstat(shm_state_fd, &shm_stat) == -1)
     {
@@ -135,7 +129,6 @@ int main(int argc, char *argv[])
         return EXIT_FAILURE;
     }
     
-    // Mapear la memoria compartida
     game_state = map_shared_memory(shm_state_fd, shm_stat.st_size, true);
     if (game_state == NULL)
     {
@@ -176,4 +169,5 @@ int main(int argc, char *argv[])
 
     cleanup_resources();
     return EXIT_SUCCESS;
+
 }
