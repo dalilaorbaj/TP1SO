@@ -119,7 +119,6 @@ void draw_board(WINDOW *win, game_state_t *state)
     box(win, 0, 0);
     mvwprintw(win, 0, 2, " ChompChamps Board ");
 
-    // Calcular el ancho de cada celda (3 caracteres)
     int cell_width = 3;
     
     // Dibujar el tablero
@@ -131,7 +130,7 @@ void draw_board(WINDOW *win, game_state_t *state)
             int pos_x = 2 + (x * cell_width);
             int pos_y = 1 + y;
             
-            // Verificar si hay un jugador en esta posición
+            // chequear si hay un jugador en esta posición
             bool player_here = false;
             int player_id = -1;
             for (unsigned int i = 0; i < state->player_count; i++)
@@ -146,26 +145,21 @@ void draw_board(WINDOW *win, game_state_t *state)
             
             if (player_here)
             {
-                // Mostrar el identificador del jugador con color según su ID
                 int color_pair = COLOR_PLAYER1 + (player_id % 4);
                 print_colored_text(win, pos_y, pos_x, color_pair, "P%u", player_id + 1);
             }
             else if (cell_value > 0)
             {
-                // Mostrar el valor de la recompensa
                 print_colored_text(win, pos_y, pos_x, COLOR_BOARD_BG, "%2d", cell_value);
             }
-
             else // cel_vallue <= 0
             {
-                // Mostrar celda capturada con el color del jugador que la capturó
                 int player_idx = -cell_value; // Convertimos el valor negativo al índice del jugador
                 if (player_idx < state->player_count) {
                     // Color del jugador que capturó la celda
                     int color_pair = COLOR_PLAYER1 + (player_idx % 4);
                     print_colored_text(win, pos_y, pos_x, color_pair, "##");
                 } else {
-                    // Si por alguna razón no hay índice de jugador válido, usar el color de capturada por defecto
                     print_colored_text(win, pos_y, pos_x, COLOR_CAPTURED, "##");
                 }
             }
@@ -214,11 +208,9 @@ void draw_legend(WINDOW *win, unsigned short player_count, player_t players[])
     wprintw(win, " - Captured cell");
     
     for (unsigned int i = 0; i < player_count; i++) {
-        // Calculate color for player (cycling through available colors)
         int color_pair = COLOR_PLAYER1 + (i % 4);
         
-        // Display player identifier on its own line
-        int row = 3 + i;  // Start player entries from row 3
+        int row = 3 + i;
         print_colored_text(win, row, 2, color_pair, "P%u", i+1);
         wprintw(win, " - %s", players[i].player_name);
     }
@@ -229,13 +221,9 @@ void draw_legend(WINDOW *win, unsigned short player_count, player_t players[])
 
 int main(int argc, char *argv[])
 {
-    // Registrar manejadores de señales
-    /*signal(SIGINT, signal_handler);
-    signal(SIGTERM, signal_handler);*/
     setup_signal_handlers();
 
-
-    // Abrir memoria compartida de sincronización (primero)
+    // Abrir memoria compartida de sincronización
     shm_sync_fd = open_shared_memory(GAME_SYNC_NAME, sizeof(game_sync_t), O_RDWR);
     if (shm_sync_fd == -1)
     {
@@ -253,7 +241,7 @@ int main(int argc, char *argv[])
         return EXIT_FAILURE;
     }
 
-    // Abrir la memoria compartida del estado del juego
+    // Abrir memoria compartida del estado del juego
     shm_state_fd = open_shared_memory(GAME_STATE_NAME, 0, O_RDONLY);
     if (shm_state_fd == -1)
     {
@@ -263,7 +251,7 @@ int main(int argc, char *argv[])
         return EXIT_FAILURE;
     }
 
-    // Obtener el tamaño real de la memoria compartida
+    // tamaño real de la memoria compartida
     struct stat shm_stat;
     if (fstat(shm_state_fd, &shm_stat) == -1)
     {
@@ -272,7 +260,6 @@ int main(int argc, char *argv[])
         return EXIT_FAILURE;
     }
 
-    // Mapear la memoria compartida
     game_state = map_shared_memory(shm_state_fd, shm_stat.st_size, true);
     if (game_state == NULL)
     {
@@ -281,17 +268,14 @@ int main(int argc, char *argv[])
         return EXIT_FAILURE;
     }
 
-    // Actualizar las variables globales width, height y player_count
     player_count = game_state->player_count;
     width = game_state->board_width;
     height = game_state->board_height;
 
-    // Inicializar ncurses con configuración robusta para Docker
     if (getenv("TERM") == NULL) {
-        putenv("TERM=xterm-256color"); // Establecer TERM si no está definido
+        putenv("TERM=xterm-256color");
     }
     
-    // Inicializar ncurses
     initscr();
     if (!has_colors()) {
         endwin();
@@ -302,7 +286,7 @@ int main(int argc, char *argv[])
     
     cbreak();
     noecho();
-    curs_set(0);  // Ocultar el cursor
+    curs_set(0);
     init_colors();
     
     // Crear ventanas
@@ -315,8 +299,8 @@ int main(int argc, char *argv[])
     int scoreboard_height = player_count + 2;  // +2 para los bordes
     int scoreboard_width = max_x - 2;  // Ancho casi completo
     
-    int legend_height = player_count + 4;  // Alto fijo para la leyenda
-    int legend_width = 30;  // Ancho fijo para la leyenda
+    int legend_height = player_count + 4;
+    int legend_width = 30;
     
     WINDOW *board_win = newwin(board_height, board_width, 1, (max_x - board_width) / 2);
     WINDOW *scoreboard_win = newwin(scoreboard_height, scoreboard_width, board_height + 1, 1);
@@ -329,12 +313,11 @@ int main(int argc, char *argv[])
         return EXIT_FAILURE;
     }
     
-    notify_view_done(game_sync);  // Avisar al master que está lista
+    notify_view_done(game_sync);
     
     // Loop principal
     bool game_over_aux = false;
     while(1){
-        // Esperar notificación del master
         wait_view_notification(game_sync);
         
         // Lectura segura del estado del juego
@@ -346,26 +329,25 @@ int main(int argc, char *argv[])
         draw_board(board_win, game_state);
         draw_scoreboard(scoreboard_win, game_state);
         draw_legend(legend_win, player_count, game_state->players);
-        doupdate();  // Actualizar todas las ventanas
+        doupdate(); 
 
-        notify_view_done(game_sync); // Notificar al master que hemos terminado
+        notify_view_done(game_sync);
 
         if(game_over_aux) {
             break;
         }
         
-        // Pequeña pausa para no consumir CPU
+        // pausa para no consumir CPU
         napms(50);
     };
 
     napms(2000);
 
-    // Mostrar mensaje de fin de juego
     mvprintw(max_y-2, 1, "Game over! Press any key to exit...");
     refresh();
     getch();
     
-    // Limpiar recursos y salir
     cleanup_resources();
     return EXIT_SUCCESS;
+
 }
