@@ -2,8 +2,6 @@
 #include <stdio.h>
 #include <errno.h>
 
-// Implementación del patrón lectores-escritores que evita inanición del escritor
-
 void writer_enter(game_sync_t* sync) {
     if (sem_wait(&sync->master_access_mutex) == -1) {
         perror("sem_wait master_access_mutex");

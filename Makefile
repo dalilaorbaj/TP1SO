@@ -3,12 +3,11 @@ CFLAGS = -std=gnu99 -Wall -I.
 LDFLAGS = -pthread
 LDFLAGS_VIEW = -pthread -lncurses
 
-EXECUTABLES = master player view_simple view
+EXECUTABLES = master player view
 
-SOURCES_MASTER = master.c shared_memory.c sync_utils.c
-SOURCES_PLAYER = players/player.c shared_memory.c sync_utils.c
+SOURCES_MASTER = master.c shared_memory.c sync_utils.c master_lib.c
+SOURCES_PLAYER = player.c shared_memory.c sync_utils.c
 SOURCES_VIEW   = view.c shared_memory.c sync_utils.c
-SOURCES_VIEW_SIMPLE = view_simple.c shared_memory.c sync_utils.c
 
 # Check if ncurses is installed
 NCURSES_CHECK = $(shell pkg-config --exists ncurses 2>/dev/null && echo "yes" || echo "no")
@@ -46,9 +45,6 @@ player: $(SOURCES_PLAYER)
 
 view: check-ncurses $(SOURCES_VIEW)
 	$(CC) $(CFLAGS) -o $@ $(SOURCES_VIEW) $(LDFLAGS_VIEW)
-
-view_simple: $(SOURCES_VIEW_SIMPLE)
-	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
 
 # Alternative target that forces dependency installation
 setup: install-deps

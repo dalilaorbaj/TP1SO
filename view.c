@@ -7,6 +7,7 @@
 #include <signal.h>
 #include <ncurses.h>
 #include <sys/stat.h>
+#include <stdarg.h>
 
 // Variables globales
 game_state_t *game_state = NULL;
@@ -14,7 +15,7 @@ game_sync_t *game_sync = NULL;
 int shm_state_fd = -1;
 int shm_sync_fd = -1;
 bool cleanup_done = false;
-unsigned short width, height;
+unsigned short width, height, player_count;
 
 // Colores para ncurses
 #define COLOR_BOARD_BG 1
@@ -65,20 +66,51 @@ void cleanup_resources(void)
 
 void signal_handler(int sig)
 {
+    notify_view_done(game_sync);
     cleanup_resources();
     exit(EXIT_SUCCESS);
+}
+
+void setup_signal_handlers() {
+    struct sigaction sa;
+    sa.sa_handler = signal_handler;
+    sigemptyset(&sa.sa_mask);
+    sa.sa_flags = SA_RESTART;
+
+    sigaction(SIGINT, &sa, NULL);
+    sigaction(SIGTERM, &sa, NULL);
+}
+
+void print_colored_text(WINDOW *win, int y, int x, int color_pair, const char *format, ...)
+{
+    va_list args;
+    va_start(args, format);
+    
+    wattron(win, COLOR_PAIR(color_pair));
+    wmove(win, y, x);
+    vw_printw(win, format, args);
+    wattroff(win, COLOR_PAIR(color_pair));
+    
+    va_end(args);
 }
 
 void init_colors(void)
 {
     start_color();
-    init_pair(COLOR_BOARD_BG, COLOR_BLACK, COLOR_GREEN);
-    init_pair(COLOR_PLAYER1, COLOR_BLACK, COLOR_RED);
-    init_pair(COLOR_PLAYER2, COLOR_BLACK, COLOR_BLUE);
-    init_pair(COLOR_PLAYER3, COLOR_BLACK, COLOR_YELLOW);
-    init_pair(COLOR_PLAYER4, COLOR_BLACK, COLOR_MAGENTA);
-    init_pair(COLOR_SCORE, COLOR_WHITE, COLOR_BLACK);
-    init_pair(COLOR_CAPTURED, COLOR_BLACK, COLOR_WHITE);
+    
+    const int color_defs[][3] = {
+        {COLOR_BOARD_BG, COLOR_BLACK, COLOR_GREEN},
+        {COLOR_PLAYER1, COLOR_BLACK, COLOR_RED},
+        {COLOR_PLAYER2, COLOR_BLACK, COLOR_BLUE},
+        {COLOR_PLAYER3, COLOR_BLACK, COLOR_YELLOW},
+        {COLOR_PLAYER4, COLOR_BLACK, COLOR_MAGENTA},
+        {COLOR_SCORE, COLOR_WHITE, COLOR_BLACK},
+        {COLOR_CAPTURED, COLOR_BLACK, COLOR_WHITE}
+    };
+    
+    for (size_t i = 0; i < sizeof(color_defs) / sizeof(color_defs[0]); i++) {
+        init_pair(color_defs[i][0], color_defs[i][1], color_defs[i][2]);
+    }
 }
 
 void draw_board(WINDOW *win, game_state_t *state)
@@ -116,33 +148,25 @@ void draw_board(WINDOW *win, game_state_t *state)
             {
                 // Mostrar el identificador del jugador con color según su ID
                 int color_pair = COLOR_PLAYER1 + (player_id % 4);
-                wattron(win, COLOR_PAIR(color_pair));
-                mvwprintw(win, pos_y, pos_x, "P%d", player_id + 1);
-                wattroff(win, COLOR_PAIR(color_pair));
+                print_colored_text(win, pos_y, pos_x, color_pair, "P%u", player_id + 1);
             }
             else if (cell_value > 0)
             {
                 // Mostrar el valor de la recompensa
-                wattron(win, COLOR_PAIR(COLOR_BOARD_BG));
-                mvwprintw(win, pos_y, pos_x, "%2d", cell_value);
-                wattroff(win, COLOR_PAIR(COLOR_BOARD_BG));
+                print_colored_text(win, pos_y, pos_x, COLOR_BOARD_BG, "%2d", cell_value);
             }
 
-            else if (cell_value <= 0)
+            else // cel_vallue <= 0
             {
                 // Mostrar celda capturada con el color del jugador que la capturó
                 int player_idx = -cell_value; // Convertimos el valor negativo al índice del jugador
-                if (player_idx >= 0 && player_idx < state->player_count) {
+                if (player_idx < state->player_count) {
                     // Color del jugador que capturó la celda
                     int color_pair = COLOR_PLAYER1 + (player_idx % 4);
-                    wattron(win, COLOR_PAIR(color_pair));
-                    mvwprintw(win, pos_y, pos_x, "##");
-                    wattroff(win, COLOR_PAIR(color_pair));
+                    print_colored_text(win, pos_y, pos_x, color_pair, "##");
                 } else {
                     // Si por alguna razón no hay índice de jugador válido, usar el color de capturada por defecto
-                    wattron(win, COLOR_PAIR(COLOR_CAPTURED));
-                    mvwprintw(win, pos_y, pos_x, "##");
-                    wattroff(win, COLOR_PAIR(COLOR_CAPTURED));
+                    print_colored_text(win, pos_y, pos_x, COLOR_CAPTURED, "##");
                 }
             }
         }
@@ -162,50 +186,43 @@ void draw_scoreboard(WINDOW *win, game_state_t *state)
     for (unsigned int i = 0; i < state->player_count; i++)
     {
         int color_pair = COLOR_PLAYER1 + (i % 4);
-        wattron(win, COLOR_PAIR(color_pair));
-        mvwprintw(win, i+1, 2, "P%d", i+1);
-        wattroff(win, COLOR_PAIR(color_pair));
-        
+        print_colored_text(win, i+1, 2, color_pair, "P%u", i+1);
+
         wattron(win, COLOR_PAIR(COLOR_SCORE));
         mvwprintw(win, i+1, 5, "%-15s Score: %4u  Moves: %3u/%3u %s", 
-                 state->players[i].player_name,
-                 state->players[i].score,
-                 state->players[i].valid_moves,
-                 state->players[i].invalid_moves,
-                 state->players[i].is_blocked ? "[BLOCKED]" : "");
+                state->players[i].player_name,
+                state->players[i].score,
+                state->players[i].valid_moves,
+                state->players[i].invalid_moves,
+                state->players[i].is_blocked ? "[BLOCKED]" : "");
     }
     
     wattroff(win, COLOR_PAIR(COLOR_SCORE));
     wrefresh(win);
 }
 
-void draw_legend(WINDOW *win)
+void draw_legend(WINDOW *win, unsigned short player_count, player_t players[])
 {
     wclear(win);
     box(win, 0, 0);
     mvwprintw(win, 0, 2, " Legend ");
     
-    wattron(win, COLOR_PAIR(COLOR_BOARD_BG));
-    mvwprintw(win, 1, 2, "##");
-    wattroff(win, COLOR_PAIR(COLOR_BOARD_BG));
+    print_colored_text(win, 1, 2, COLOR_BOARD_BG, "##");
     wprintw(win, " - Cell with points");
-    
-    wattron(win, COLOR_PAIR(COLOR_CAPTURED));
-    mvwprintw(win, 2, 2, "##");
-    wattroff(win, COLOR_PAIR(COLOR_CAPTURED));
+
+    print_colored_text(win, 2, 2, COLOR_CAPTURED, "##");
     wprintw(win, " - Captured cell");
     
-    wattron(win, COLOR_PAIR(COLOR_PLAYER1));
-    mvwprintw(win, 3, 2, "P1");
-    wattroff(win, COLOR_PAIR(COLOR_PLAYER1));
-    wprintw(win, " - Player 1");
-    
-    if (game_state && game_state->player_count > 1) {
-        wattron(win, COLOR_PAIR(COLOR_PLAYER2));
-        mvwprintw(win, 4, 2, "P2");
-        wattroff(win, COLOR_PAIR(COLOR_PLAYER2));
-        wprintw(win, " - Player 2");
+    for (unsigned int i = 0; i < player_count; i++) {
+        // Calculate color for player (cycling through available colors)
+        int color_pair = COLOR_PLAYER1 + (i % 4);
+        
+        // Display player identifier on its own line
+        int row = 3 + i;  // Start player entries from row 3
+        print_colored_text(win, row, 2, color_pair, "P%u", i+1);
+        wprintw(win, " - %s", players[i].player_name);
     }
+    
     
     wrefresh(win);
 }
@@ -213,8 +230,10 @@ void draw_legend(WINDOW *win)
 int main(int argc, char *argv[])
 {
     // Registrar manejadores de señales
-    signal(SIGINT, signal_handler);
-    signal(SIGTERM, signal_handler);
+    /*signal(SIGINT, signal_handler);
+    signal(SIGTERM, signal_handler);*/
+    setup_signal_handlers();
+
 
     // Abrir memoria compartida de sincronización (primero)
     shm_sync_fd = open_shared_memory(GAME_SYNC_NAME, sizeof(game_sync_t), O_RDWR);
@@ -226,7 +245,7 @@ int main(int argc, char *argv[])
         return EXIT_FAILURE;
     }
 
-    game_sync = map_shared_memory(shm_sync_fd, sizeof(game_sync_t));
+    game_sync = map_shared_memory(shm_sync_fd, sizeof(game_sync_t), false);
     if (game_sync == MAP_FAILED)
     {
         perror("map_shared_memory game_sync");
@@ -254,7 +273,7 @@ int main(int argc, char *argv[])
     }
 
     // Mapear la memoria compartida
-    game_state = map_shared_memory_readonly(shm_state_fd, shm_stat.st_size);
+    game_state = map_shared_memory(shm_state_fd, shm_stat.st_size, true);
     if (game_state == NULL)
     {
         perror("map_shared_memory_readonly game_state");
@@ -262,7 +281,8 @@ int main(int argc, char *argv[])
         return EXIT_FAILURE;
     }
 
-    // Actualizar las variables globales width y height
+    // Actualizar las variables globales width, height y player_count
+    player_count = game_state->player_count;
     width = game_state->board_width;
     height = game_state->board_height;
 
@@ -292,11 +312,11 @@ int main(int argc, char *argv[])
     int board_height = height + 2;  // +2 para los bordes
     int board_width = width * 3 + 4;  // 3 caracteres por celda + bordes
     
-    int scoreboard_height = game_state->player_count + 2;  // +2 para los bordes
+    int scoreboard_height = player_count + 2;  // +2 para los bordes
     int scoreboard_width = max_x - 2;  // Ancho casi completo
     
-    int legend_height = 6;  // Alto fijo para la leyenda
-    int legend_width = 25;  // Ancho fijo para la leyenda
+    int legend_height = player_count + 4;  // Alto fijo para la leyenda
+    int legend_width = 30;  // Ancho fijo para la leyenda
     
     WINDOW *board_win = newwin(board_height, board_width, 1, (max_x - board_width) / 2);
     WINDOW *scoreboard_win = newwin(scoreboard_height, scoreboard_width, board_height + 1, 1);
@@ -309,33 +329,34 @@ int main(int argc, char *argv[])
         return EXIT_FAILURE;
     }
     
-    // Notificar al master que estamos listos
-    notify_view_done(game_sync);
+    notify_view_done(game_sync);  // Avisar al master que está lista
     
     // Loop principal
-    while (!game_state->game_over)
-    {
+    bool game_over_aux = false;
+    while(1){
         // Esperar notificación del master
         wait_view_notification(game_sync);
         
         // Lectura segura del estado del juego
         reader_enter(game_sync);
-        
+        game_over_aux = game_state->game_over;
+        reader_exit(game_sync);
+
         // Actualizar la interfaz
         draw_board(board_win, game_state);
         draw_scoreboard(scoreboard_win, game_state);
-        draw_legend(legend_win);
-        
+        draw_legend(legend_win, player_count, game_state->players);
         doupdate();  // Actualizar todas las ventanas
-        
-        reader_exit(game_sync);
-        
-        // Notificar al master que hemos terminado
-        notify_view_done(game_sync);
+
+        notify_view_done(game_sync); // Notificar al master que hemos terminado
+
+        if(game_over_aux) {
+            break;
+        }
         
         // Pequeña pausa para no consumir CPU
         napms(50);
-    }
+    };
 
     napms(2000);
 
