@@ -1,15 +1,14 @@
 #include "master_lib.h"
 
-// Desplazamientos de dirección (0 = arriba, 1 = arriba-derecha, ... sentido horario)
 static const int DIR_OFFSETS[8][2] = {
-    {0, -1}, // 0: arriba
-    {1, -1}, // 1: arriba-derecha
-    {1, 0},  // 2: derecha
-    {1, 1},  // 3: abajo-derecha
-    {0, 1},  // 4: abajo
-    {-1, 1}, // 5: abajo-izquierda
-    {-1, 0}, // 6: izquierda
-    {-1, -1} // 7: arriba-izquierda
+    {0, -1}, // arriba
+    {1, -1}, // arriba-derecha
+    {1, 0},  // derecha
+    {1, 1},  // abajo-derecha
+    {0, 1},  // abajo
+    {-1, 1}, // abajo-izquierda
+    {-1, 0}, // izquierda
+    {-1, -1} // arriba-izquierda
 };
 
 // Parámetros por defecto
@@ -32,13 +31,12 @@ int main(int argc, char *argv[])
     if (check_game_status(state) != 0)
         return EXIT_FAILURE;
 
-    game_sync_t *game_sync = create_game_sync(num_players); //(!) chequear que create_game_state maneje el caso MAP_FAILED internamente y devuelva NULL en ese caso
+    game_sync_t *game_sync = create_game_sync(num_players);
     if (check_game_sync(game_sync, state, width, height) != 0)
         return EXIT_FAILURE;
 
     initialize_game_state(state, player_paths, num_players, seed);
 
-    // Crear proceso vista (si corresponde)
    pid_t view_pid = -1;
     bool has_view = (view_path != NULL);
 
@@ -71,6 +69,8 @@ int main(int argc, char *argv[])
     time_t last_valid_time = time(NULL);
     bool all_blocked_flag = false;
     int start_index = 0;
+
+    // loop principal
     while (true){
         long remaining = calculate_remaining_time(last_valid_time, timeout_s);
         if (remaining <= 0){
@@ -99,7 +99,7 @@ int main(int argc, char *argv[])
         }
         int ready_index = search_pipe_ready(&readfds, pipe_fds, num_players, &start_index);
         if (ready_index == -1){
-            // Ningún FD encontrado listo (no debería suceder si res > 0)
+            // Ningún FD encontrado listo
             continue;
         }
         int i = ready_index;
