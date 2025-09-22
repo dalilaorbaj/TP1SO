@@ -60,6 +60,12 @@ int main(int argc, char *argv[])
         return EXIT_FAILURE;
     }
 
+    /* === imprimir estado inicial antes de los movimientos iniciales de los jugadores === */
+
+    if (has_view) {
+        notify_view(game_sync);
+        wait_view_done(game_sync);
+    }
 
     for (int i = 0; i < num_players; ++i){
         allow_player_move(game_sync, i);
